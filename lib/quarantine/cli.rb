@@ -30,7 +30,7 @@ class Quarantine
           @options[:region] = region
         end
 
-        parser.on('-eENDPOINT', '--endpoint=[ENDPOINT]', String, 'Specify the aws endpoint for DynamoDB') do |endpoint|
+        parser.on('-e', '--endpoint [ENDPOINT]', String, 'Specify the aws endpoint for DynamoDB') do |endpoint|
           @options[:endpoint] = endpoint
         end
 
