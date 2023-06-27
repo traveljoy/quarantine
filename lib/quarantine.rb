@@ -122,6 +122,9 @@ class Quarantine
   def on_test(example, status, passed:)
     extra_attributes = @options[:extra_attributes] ? @options[:extra_attributes].call(example) : {}
 
+    # Clear exception after looking at extra_attributes, as caller may want to view exception data
+    example.clear_exception! if status == :quarantined && !passed
+
     new_consecutive_passes = passed ? (@old_tests[example.id]&.consecutive_passes || 0) + 1 : 0
     release_at = @options[:release_at_consecutive_passes]
     new_status = !release_at.nil? && new_consecutive_passes >= release_at ? :passing : status

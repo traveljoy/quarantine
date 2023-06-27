@@ -108,7 +108,6 @@ class Quarantine
           result = Quarantine::RSpecAdapter.final_status(example)
           if result
             status, passed = result
-            example.clear_exception! if status == :quarantined && !passed
             Quarantine::RSpecAdapter.quarantine.on_test(example, status, passed: passed)
           end
         end
