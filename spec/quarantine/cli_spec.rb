@@ -27,6 +27,18 @@ describe Quarantine::CLI do
       expect(cli.options[:region]).to eq('us-west-1')
     end
 
+    it 'define the endpoint' do
+      endpoint = 'http://localhost:4569'
+      cli = Quarantine::CLI.new
+
+      ARGV << '-r' << 'us-west-1'
+      ARGV << '-e' << endpoint
+
+      cli.parse
+
+      expect(cli.options[:endpoint]).to eq(endpoint)
+    end
+
     it 'define test statuses table name' do
       cli = Quarantine::CLI.new
 
@@ -61,6 +73,26 @@ describe Quarantine::CLI do
         ).once
 
         cli.create_tables
+      end
+
+      it 'called with endpoint' do
+        endpoint = 'localhost:4569'
+        dynamodb_double = double('dynamodb instance')
+
+        allow(dynamodb_double).to receive(:create_table).with(any_args)
+        allow(Quarantine::Databases::DynamoDB)
+          .to receive(:new).and_return(dynamodb_double)
+
+        ARGV << '-r' << 'us-west-1'
+        ARGV << '-e' << endpoint
+
+        cli.parse
+        cli.create_tables
+
+        expect(dynamodb_double).to have_received(:create_table)
+        expect(Quarantine::Databases::DynamoDB)
+          .to have_received(:new)
+          .with(hash_including(endpoint: endpoint))
       end
 
       it 'raises exception if Quarantine::DatabaseError exception occurs' do

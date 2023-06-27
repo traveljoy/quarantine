@@ -12,6 +12,9 @@ class Quarantine
     class DynamoDB < Base
       extend T::Sig
 
+      # Need to batch things into groups of max 25 or AWS raises an error
+      BATCH_WRITE_MAXIMUM_ITEMS = T.let(25, Integer)
+
       Attribute = T.type_alias { { attribute_name: String, attribute_type: String, key_type: String } }
 
       sig { returns(Aws::DynamoDB::Client) }
@@ -42,17 +45,19 @@ class Quarantine
         ).void
       end
       def write_items(table_name, items)
-        @dynamodb.batch_write_item(
-          request_items: {
-            table_name => items.map do |item|
-              {
-                put_request: {
-                  item: item
+        items.each_slice(BATCH_WRITE_MAXIMUM_ITEMS) do |batch_items|
+          @dynamodb.batch_write_item(
+            request_items: {
+              table_name => batch_items.map do |item|
+                {
+                  put_request: {
+                    item: item
+                  }
                 }
-              }
-            end
-          }
-        )
+              end
+            }
+          )
+        end
       rescue Aws::DynamoDB::Errors::ServiceError
         raise Quarantine::DatabaseError
       end
